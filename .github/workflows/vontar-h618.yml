@@ -10,28 +10,37 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     steps:
-      - name: 1. 拉取代码
+      - name: 1. 拉取当前定制仓库代码
         uses: actions/checkout@v4
 
-      - name: 2. 注册 QEMU 跨架构支持
+      - name: 2. 拉取上游 Armbian 构建脚本以修复 base-files 报错
+        uses: actions/checkout@v4
+        with:
+          repository: armbian/build
+          ref: main
+          sparse-checkout: |
+            lib/functions/artifacts/artifact-armbian-base-files.sh
+            lib/functions/general/apt-utils.sh
+          path: upstream-fix
+
+      - name: 3. 覆盖修复旧版脚本并清理临时目录
+        run: |
+          cp -f upstream-fix/lib/functions/artifacts/artifact-armbian-base-files.sh lib/functions/artifacts/artifact-armbian-base-files.sh
+          cp -f upstream-fix/lib/functions/general/apt-utils.sh lib/functions/general/apt-utils.sh
+          rm -rf upstream-fix
+
+      - name: 4. 注册 QEMU 跨架构支持
         uses: docker/setup-qemu-action@v3
         with:
           platforms: arm64
 
-      - name: 3. 修复旧版构建脚本的 base-files jq 解析 Bug
-        run: |
-          git clone --depth=1 https://github.com /tmp/armbian-upstream
-          cp -f /tmp/armbian-upstream/lib/functions/artifacts/artifact-armbian-base-files.sh lib/functions/artifacts/artifact-armbian-base-files.sh
-          cp -f /tmp/armbian-upstream/lib/functions/general/apt-utils.sh lib/functions/general/apt-utils.sh
-          rm -rf /tmp/armbian-upstream
-
-      - name: 4. 清理磁盘空间
+      - name: 5. 清理磁盘空间
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
           sudo apt-get clean
           df -h
 
-      - name: 5. 编译 Vontar H618
+      - name: 6. 编译 Vontar H618
         run: |
           chmod +x compile.sh
           ./compile.sh \
@@ -43,7 +52,7 @@ jobs:
             KERNEL_CONFIGURE=no \
             SHARE_LOG=yes
 
-      - name: 6. 自动发布镜像到 Releases
+      - name: 7. 自动发布镜像到 Releases
         uses: softprops/action-gh-release@v2
         with:
           tag_name: vontar-h618-${{ github.run_number }}
