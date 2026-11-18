@@ -40,7 +40,7 @@ jobs:
           sudo apt-get clean
           df -h
 
-      - name: 6. 编译 Vontar H618
+      - name: 6. 编译 Vontar H618 并压缩镜像
         run: |
           chmod +x compile.sh
           ./compile.sh \
@@ -50,13 +50,22 @@ jobs:
             BUILD_MINIMAL=no \
             BUILD_DESKTOP=no \
             KERNEL_CONFIGURE=no \
+            COMPRESS_OUTPUTIMAGE=sha,img,xz \
             SHARE_LOG=yes
+          ls -lh output/images/
+          # 兜底检查：如果生成的仍是未压缩的 .img，则手动压缩为 .img.xz
+          if ls output/images/*.img 1> /dev/null 2>&1; then
+            xz -T0 -v output/images/*.img
+          fi
+          ls -lh output/images/
 
       - name: 7. 自动发布镜像到 Releases
         uses: softprops/action-gh-release@v2
         with:
           tag_name: vontar-h618-${{ github.run_number }}
           name: Vontar H618 Custom #${{ github.run_number }}
-          files: output/images/*.img.xz
+          files: |
+            output/images/*.img.xz
+            output/images/*.sha
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
