@@ -13,30 +13,35 @@ jobs:
       - name: 1. 拉取代码
         uses: actions/checkout@v4
 
-      - name: 2. 注册 QEMU 跨架构支持 (修复 binfmts 报错)
+      - name: 2. 注册 QEMU 跨架构支持
         uses: docker/setup-qemu-action@v3
         with:
           platforms: arm64
 
-      - name: 3. 清理 GitHub 虚拟机的多余软件以释放磁盘空间
+      - name: 3. 修复旧版构建脚本的 base-files jq 解析 Bug
+        run: |
+          curl -fsSL https://githubusercontent.com -o lib/functions/artifacts/artifact-armbian-base-files.sh
+          curl -fsSL https://githubusercontent.com -o lib/functions/general/apt-utils.sh
+
+      - name: 4. 清理磁盘空间
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
           sudo apt-get clean
           df -h
 
-      - name: 4. 编译 Vontar H618 (Bookworm Edge 6.12)
+      - name: 5. 编译 Vontar H618
         run: |
           chmod +x compile.sh
           ./compile.sh \
             BOARD=vontar-h618 \
             BRANCH=edge \
-            RELEASE=trixie \
+            RELEASE=bookworm \
             BUILD_MINIMAL=no \
             BUILD_DESKTOP=no \
             KERNEL_CONFIGURE=no \
             SHARE_LOG=yes
 
-      - name: 5. 自动发布镜像到 Releases
+      - name: 6. 自动发布镜像到 Releases
         uses: softprops/action-gh-release@v2
         with:
           tag_name: vontar-h618-${{ github.run_number }}
