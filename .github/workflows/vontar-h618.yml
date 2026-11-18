@@ -20,8 +20,10 @@ jobs:
 
       - name: 3. 修复旧版构建脚本的 base-files jq 解析 Bug
         run: |
-          curl -fsSL https://githubusercontent.com -o lib/functions/artifacts/artifact-armbian-base-files.sh
-          curl -fsSL https://githubusercontent.com -o lib/functions/general/apt-utils.sh
+          git clone --depth=1 https://github.com /tmp/armbian-upstream
+          cp -f /tmp/armbian-upstream/lib/functions/artifacts/artifact-armbian-base-files.sh lib/functions/artifacts/artifact-armbian-base-files.sh
+          cp -f /tmp/armbian-upstream/lib/functions/general/apt-utils.sh lib/functions/general/apt-utils.sh
+          rm -rf /tmp/armbian-upstream
 
       - name: 4. 清理磁盘空间
         run: |
