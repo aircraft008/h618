@@ -1,10 +1,10 @@
 name: Build Vontar H618
 
 on:
-  workflow_dispatch: # 仅当你手动在网页点击运行时才触发，省时省额度
+  workflow_dispatch:
 
 permissions:
-  contents: write # 允许自动创建 Release 并上传固件
+  contents: write
 
 jobs:
   build:
@@ -13,13 +13,18 @@ jobs:
       - name: 1. 拉取代码
         uses: actions/checkout@v4
 
-      - name: 2. 清理 GitHub 虚拟机的多余软件以释放磁盘空间
+      - name: 2. 注册 QEMU 跨架构支持 (修复 binfmts 报错)
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - name: 3. 清理 GitHub 虚拟机的多余软件以释放磁盘空间
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
           sudo apt-get clean
           df -h
 
-      - name: 3. 编译 Vontar H618 (Bookworm Edge 6.12)
+      - name: 4. 编译 Vontar H618 (Bookworm Edge 6.12)
         run: |
           chmod +x compile.sh
           ./compile.sh \
@@ -31,7 +36,7 @@ jobs:
             KERNEL_CONFIGURE=no \
             SHARE_LOG=yes
 
-      - name: 4. 自动发布镜像到 Releases
+      - name: 5. 自动发布镜像到 Releases
         uses: softprops/action-gh-release@v2
         with:
           tag_name: vontar-h618-${{ github.run_number }}
