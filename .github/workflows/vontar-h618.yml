@@ -30,7 +30,7 @@ jobs:
           ./compile.sh \
             BOARD=vontar-h618 \
             BRANCH=edge \
-            RELEASE=bookworm \
+            RELEASE=trixie \
             BUILD_MINIMAL=no \
             BUILD_DESKTOP=no \
             KERNEL_CONFIGURE=no \
