@@ -46,7 +46,7 @@ jobs:
           ./compile.sh \
             BOARD=vontar-h618 \
             BRANCH=edge \
-            RELEASE=bookworm \
+            RELEASE=trixie \
             BUILD_MINIMAL=no \
             BUILD_DESKTOP=no \
             KERNEL_CONFIGURE=no \
@@ -59,11 +59,11 @@ jobs:
           fi
           ls -lh output/images/
 
-      - name: 7. 自动发布镜像到 Releases
+      - name: 7. 自动发布trixie镜像到 Releases
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: vontar-h618-${{ github.run_number }}
-          name: Vontar H618 Custom #${{ github.run_number }}
+          tag_name: vontar-h618-trixie-${{ github.run_number }}
+          name: Vontar H618 Trixie Custom #${{ github.run_number }}
           files: |
             output/images/*.img.xz
             output/images/*.sha
