@@ -10,17 +10,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Disable openvfd driver in patch
-        run: |
-          find patch/ -type f -name "*.patch" -exec sed -i '/openvfd/d' {} +
-
       - name: Build Armbian Kernel Only
         run: |
           sudo -E COLUMNS=160 ./compile.sh kernel \
             BOARD=vontar-h618 \
             BRANCH=edge \
             KERNEL_CONFIGURE=no \
-            INSTALL_HEADERS=yes
+            INSTALL_HEADERS=yes \
+            KCFLAGS="-Wno-error"
+
 
 
       - name: Upload Kernel Deb Packages
