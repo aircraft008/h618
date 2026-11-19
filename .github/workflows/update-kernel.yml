@@ -1,7 +1,7 @@
 name: Build H618 Kernel Deb
 
 on:
-  workflow_dispatch: # 支持在网页端手动点击运行
+  workflow_dispatch: # 允许在 Actions 页面手动触发
 
 jobs:
   build-kernel:
@@ -10,16 +10,39 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Prepare custom kernel config from original
+        run: |
+          mkdir -p userpatches
+          # 1. 从仓库原版完整配置文件复制一份到 userpatches/
+          cp config/kernel/linux-sunxi64-edge.config userpatches/linux-sunxi64-edge.config
+          
+          # 2. 删除原文件中原有的未启用注释行，防止与新追加的参数冲突
+          sed -i '/CONFIG_IP_ADVANCED_ROUTER/d' userpatches/linux-sunxi64-edge.config
+          sed -i '/CONFIG_IP_MULTIPLE_TABLES/d' userpatches/linux-sunxi64-edge.config
+          sed -i '/CONFIG_IPV6_MULTIPLE_TABLES/d' userpatches/linux-sunxi64-edge.config
+          
+          # 3. 在文件末尾自动追加策略路由与多表支持参数
+          cat << 'EOF' >> userpatches/linux-sunxi64-edge.config
+          CONFIG_IP_ADVANCED_ROUTER=y
+          CONFIG_IP_MULTIPLE_TABLES=y
+          CONFIG_IPV6=y
+          CONFIG_IPV6_MULTIPLE_TABLES=y
+          EOF
+
+      - name: Remove broken openvfd driver from patches
+        run: |
+          # 剔除导致 6.12 内核编译报错的前置面板 LED 驱动补丁
+          find patch/ -type f -name "*.patch" -exec sed -i '/openvfd/d' {} +
+          find patch/ -type f -iname "*openvfd*.patch" -exec mv {} {}.disabled \;
+
       - name: Build Armbian Kernel Only
         run: |
+          # 使用 sudo -E 保留 GitHub Actions 环境变量，仅编译内核 .deb 包
           sudo -E COLUMNS=160 ./compile.sh kernel \
             BOARD=vontar-h618 \
             BRANCH=edge \
             KERNEL_CONFIGURE=no \
-            INSTALL_HEADERS=yes \
-            KCFLAGS="-Wno-error"
-
-
+            INSTALL_HEADERS=yes
 
       - name: Upload Kernel Deb Packages
         uses: actions/upload-artifact@v4
