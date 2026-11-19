@@ -12,11 +12,12 @@ jobs:
 
       - name: Build Armbian Kernel Only
         run: |
-          sudo ./compile.sh kernel \
+          sudo GITHUB_ACTIONS=true COLUMNS=160 ./compile.sh kernel \
             BOARD=vontar-h618 \
             BRANCH=edge \
             KERNEL_CONFIGURE=no \
             INSTALL_HEADERS=yes
+
 
       - name: Upload Kernel Deb Packages
         uses: actions/upload-artifact@v4
